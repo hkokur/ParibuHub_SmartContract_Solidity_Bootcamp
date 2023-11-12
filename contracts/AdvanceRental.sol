@@ -128,6 +128,7 @@ contract AdvanceRental {
         _lease.startTime = _startTime;
         _lease.endTime = _endTime;
         leases[msg.sender].push(_lease);
+        assets[_lessor][_assetID].status = false;
         emit addedRent(msg.sender, leases[msg.sender].length - 1);
         return leases[msg.sender].length - 1;
     }
@@ -147,6 +148,7 @@ contract AdvanceRental {
         if (stampDifference < 1296000) {
             _lease.status = false;
             leases[_renter][_leaseID] = _lease;
+            assets[_lease.lessor][_lease.assetID].status = true;
             emit breakedLease(_renter, _leaseID, true);
             return true;
         }
@@ -178,6 +180,10 @@ contract AdvanceRental {
         _approvement.approve = result;
         if (result) {
             leases[_approvement.renter][_approvement.leaseID].status = false;
+            Lease memory _lease = leases[_approvement.renter][
+                _approvement.leaseID
+            ];
+            assets[_lease.lessor][_lease.assetID].status = true;
         }
         approvements[msg.sender][approvementID].ended = true;
         emit approvement(msg.sender, approvementID, true);
@@ -231,50 +237,4 @@ contract AdvanceRental {
             true
         );
     }
-
-    // // Asset[] public assets;
-    // // Lease[] public leases;
-
-    // // uint public assetIndex;
-    // // uint public leaseIndex;
-
-    // modifier checkAssetExist(uint _assetIndex){
-    //     require(_assetIndex < assetIndex, "No Such a Asset");
-    //     _;
-    // }
-
-    // modifier checkLeaseExist(uint _leaseIndex){
-    //     require(_leaseIndex < leaseIndex, "No Such a Lease");
-    //     _;
-    // }
-
-    // modifier checkTimestamp(uint _startTime, uint _endTime){
-    //     require(_startTime < _endTime && _startTime > block.timestamp && _endTime > block.timestamp,
-    //                                                                             "Timestamp Error");
-    //     _;
-    // }
-
-    // function addAsset(address _lessor, string memory _assetAddress) public returns(uint){
-    //     Asset memory _asset;
-    //     _asset.lessor = _lessor;
-    //     _asset.assetAddress = _assetAddress;
-    //     assets.push(_asset);
-    //     return assetIndex++;
-    // }
-
-    // function rent(uint _assetID, address _lenter, uint _startTime, uint _endTime)
-    //         checkAssetExist(_assetID) checkTimestamp(_startTime, _endTime) public returns (uint){
-    //     Lease memory _lease;
-    //     _lease.assetID = _assetID;
-    //     _lease.lenter = _lenter;
-    //     _lease.startTime = _startTime;
-    //     _lease.endTime = _endTime;
-    //     leases.push(_lease);
-    //     return leaseIndex++;
-    // }
-
-    // function breakLease(uint _leaseIndex) checkLeaseExist(_leaseIndex) public returns(uint){
-    //     delete leases[_leaseIndex];
-    //     return _leaseIndex;
-    // }
 }
