@@ -37,13 +37,8 @@ export function ListLeases(props) {
             const renter = event.target.breakLease.getAttribute("renter");
             const lessor = event.target.breakLease.getAttribute("lessor");
             const leaseid = event.target.breakLease.getAttribute("leaseid");
-            const result = await breakLease(renter, lessor, leaseid)
-            if (result.value.toNumber()) {
-                alert("Lease successfully break!")
-            }
-            else {
-                alert("Need Approvement! lease can't be break.")
-            }
+            await breakLease(renter, lessor, leaseid)
+            alert("Rent cancellation has been processed!")
         }
         else if (event.target.createComplaint !== undefined) {
             const renter = event.target.createComplaint.getAttribute("renter");

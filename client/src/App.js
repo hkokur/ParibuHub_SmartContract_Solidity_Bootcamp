@@ -13,22 +13,10 @@ import { ListComplaints } from "./components/listComplaints";
 
 export default class App extends Component {
   state = {
-    contractAddress: "0x3497C5C65D21D208888Ecf7BA83eF8FadF3a820C",
+    contractAddress: "0x02bc5679361c6f73891cfaF845a521AC6aA61089",
     abi: RentalABI.abi,
     events: [],
   }
-
-  // componentDidMount() {
-  //   if (this.state.provider) {
-  //     this.getEvents().then(
-  //       events => {
-  //         if (events && events.length > this.state.events.length) {
-  //           this.setState({ events: events })
-  //         }
-  //       }
-  //     );
-  //   }
-  // }
 
   componentDidUpdate() {
     if (this.state.provider) {
@@ -58,7 +46,6 @@ export default class App extends Component {
 
   getEvents = async () => {
     const contract = await this.connectToRentalContract();
-    // const eventFilter = contract.filters.addedAsset();
     const events = await contract.queryFilter("*");
     return events
   }
@@ -127,8 +114,7 @@ export default class App extends Component {
     let index = 0
     while (true) {
       try {
-        let complaint = await rentalContract.complaints(0);
-        console.log(complaint)
+        let complaint = await rentalContract.complaints(index);
         complaints.push(complaint)
         index++;
       }
@@ -162,7 +148,8 @@ export default class App extends Component {
     let signer = this.state.signer;
     let isOwner = false;
     if (signer) {
-      isOwner = (await rentalContract.owner()).value === signer ? true : false;
+      isOwner = (await rentalContract.owner()).toLowerCase() === this.state.selectedAddress.toLowerCase() ? true : false;
+
     }
     return isOwner
   }
@@ -170,13 +157,15 @@ export default class App extends Component {
   render() {
     return (<div className="container m-5">
       <div className="row">
+        <p>Manually refresh the page to see state changes</p>
+      </div>
+      <div className="row">
         <div className="col">
           {/* <h4>
             You are : {this.state.selectedAddress ? this.state.selectedAddress : "None"}
           </h4> */}
         </div>
         {this.connect()}
-
       </div>
       <div className="row mt-2 ">
         <h4 className="">Add New Asset</h4>
