@@ -35,10 +35,10 @@ export function ListComplaints(props) {
     gettingComplaints();
     return <div className="text-center">
         <h4 className="badge bg-warning">Only Owner can do!</h4>
-        {complaints.map((complaint) => {
 
+        {complaints.map((complaint) => {
+            index++;
             return <div className="row text-center border-bottom border-warning">
-                {index++}
                 <div className="col">
                     <ul className="list-group">
                         <li className="list-group item">
