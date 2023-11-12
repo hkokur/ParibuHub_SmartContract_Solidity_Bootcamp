@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.8.2 <0.9.0;
+import "hardhat/console.sol";
 
 contract AdvanceRental {
     struct Asset {
@@ -41,11 +42,20 @@ contract AdvanceRental {
     mapping(address => Asset[]) public assets; // address : owner key
     mapping(address => Lease[]) public leases; // address : lenter key
     mapping(address => Approvement[]) public approvements;
-    Complaint[] complaints;
-    uint complaintIndex;
+    Complaint[] public complaints;
+    uint public complaintIndex;
 
     // Events
     event addedAsset(address lessor, uint assetID);
+    event addedRent(address renter, uint leaseID);
+    event breakedLease(address renter, uint leaseID, bool status);
+    event approvement(address whom, uint approvementID, bool ended);
+    event addedComplaint(
+        address complainedAbout,
+        string description,
+        uint complaintIndex,
+        bool ended
+    );
 
     constructor() {
         owner = msg.sender;
@@ -118,6 +128,7 @@ contract AdvanceRental {
         _lease.startTime = _startTime;
         _lease.endTime = _endTime;
         leases[msg.sender].push(_lease);
+        emit addedRent(msg.sender, leases[msg.sender].length - 1);
         return leases[msg.sender].length - 1;
     }
 
@@ -133,9 +144,10 @@ contract AdvanceRental {
             ? stampDifference
             : -stampDifference;
         // if 15 days early or late, lease going to be passive
-        if (stampDifference > 1296000) {
+        if (stampDifference < 1296000) {
             _lease.status = false;
             leases[_renter][_leaseID] = _lease;
+            emit breakedLease(_renter, _leaseID, true);
             return true;
         }
 
@@ -148,11 +160,14 @@ contract AdvanceRental {
         _approvement.ended = false;
         if (msg.sender == _renter) {
             _approvement.description = "Renter wanna end the lease";
-            approvements[_renter].push(_approvement);
+            approvements[_lessor].push(_approvement);
+            emit approvement(_lessor, approvements[_lessor].length - 1, false);
         } else if (msg.sender == _lessor) {
             _approvement.description = "Lessor wanna end the lease";
-            approvements[_lessor].push(_approvement);
+            approvements[_renter].push(_approvement);
+            emit approvement(_renter, approvements[_renter].length - 1, false);
         }
+        emit breakedLease(_renter, _leaseID, false);
         return false;
     }
 
@@ -163,10 +178,9 @@ contract AdvanceRental {
         _approvement.approve = result;
         if (result) {
             leases[_approvement.renter][_approvement.leaseID].status = false;
-            approvements[msg.sender][approvementID].ended = true;
-        } else {
-            approvements[msg.sender][approvementID].ended = false;
         }
+        approvements[msg.sender][approvementID].ended = true;
+        emit approvement(msg.sender, approvementID, true);
     }
 
     function complain(
@@ -184,6 +198,12 @@ contract AdvanceRental {
         _complaint.description = _description;
         _complaint.ended = false;
         complaints.push(_complaint);
+        emit addedComplaint(
+            _complainAbout,
+            _description,
+            complaintIndex,
+            false
+        );
         ++complaintIndex;
     }
 
@@ -195,9 +215,21 @@ contract AdvanceRental {
         _complaint.result = result;
         if (result) {
             isblacklisted[_complaint.complainedAbout] = true;
+            if (
+                _complaint.complainedAbout == _complaint.renter ||
+                _complaint.complainedAbout == _complaint.lessor
+            ) {
+                leases[_complaint.renter][_complaint.leaseID].status = false;
+            }
         }
         _complaint.ended = true;
         complaints[_complaintIndex] = _complaint;
+        emit addedComplaint(
+            _complaint.complainedAbout,
+            _complaint.description,
+            _complaintIndex,
+            true
+        );
     }
 
     // // Asset[] public assets;
